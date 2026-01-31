@@ -525,6 +525,22 @@ function App() {
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       if (isIOS) {
+        try {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: "image/png" });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: "Weight & Balance",
+            });
+            return;
+          }
+        } catch (error) {
+          console.error("Share failed", error);
+        }
+
         const newTab = window.open();
         if (newTab) {
           newTab.document.title = "Weight & Balance";
