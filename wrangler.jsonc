@@ -1,0 +1,8 @@
+{
+  // minimal Wrangler config to publish static Vite assets
+  "name": "pa28-tx-weight-balance",
+  "compatibility_date": "2026-01-31",
+  "assets": {
+    "directory": "./dist"
+  }
+}

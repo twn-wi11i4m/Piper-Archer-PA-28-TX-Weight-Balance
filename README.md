@@ -30,3 +30,17 @@ npm run preview
 ## Notes
 
 - To use the PWA offline, build and serve the production bundle (the service worker is enabled there).
+
+## Deployment
+
+- Build the production assets before deploying:
+
+	```shell
+	npm run build
+	```
+
+- Publish the compiled `dist` folder via Cloudflare Wrangler (the `wrangler.jsonc` config already points to the assets directory):
+
+	```shell
+	npx wrangler deploy --assets ./dist
+	```
