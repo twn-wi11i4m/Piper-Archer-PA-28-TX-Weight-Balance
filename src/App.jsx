@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import html2canvas from "html2canvas";
 
 const FUEL_LB_PER_GAL = 6;
 const FUEL_BURN_GAL_PER_HR = 11;
@@ -88,6 +89,8 @@ const formatDensityAltFormula = (label, pressureAlt, temp, isaTemp, result) => {
 };
 
 function App() {
+  const exportRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
   // Weight & Balance States
   const [basicWeight, setBasicWeight] = useState("");
   const [basicArm, setBasicArm] = useState("");
@@ -463,9 +466,90 @@ function App() {
     setArriveRunwayDir("");
   };
 
+  const handleExportPhoto = async () => {
+    if (!exportRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(exportRef.current, {
+        backgroundColor: "#f8fafc",
+        scale: 2,
+        useCORS: true,
+        onclone: (doc) => {
+          const view = doc.defaultView;
+          doc.querySelectorAll("input, textarea").forEach((el) => {
+            const value = el.value ?? "";
+            const placeholder = el.getAttribute("placeholder") ?? "";
+            const displayValue = value || placeholder;
+            if (!view) {
+              el.setAttribute("value", displayValue);
+              return;
+            }
+
+            const style = view.getComputedStyle(el);
+            const replacement = doc.createElement("div");
+            replacement.textContent = displayValue;
+            replacement.style.boxSizing = "border-box";
+            replacement.style.width = style.width;
+            replacement.style.height = style.height;
+            replacement.style.border = style.border;
+            replacement.style.borderRadius = style.borderRadius;
+            replacement.style.padding = style.padding;
+            replacement.style.fontFamily = style.fontFamily;
+            replacement.style.fontSize = style.fontSize;
+            replacement.style.fontWeight = style.fontWeight;
+            replacement.style.lineHeight = style.lineHeight;
+            replacement.style.color = style.color;
+            replacement.style.backgroundColor = style.backgroundColor;
+            replacement.style.display = "flex";
+            replacement.style.alignItems = "center";
+            replacement.style.justifyContent = "flex-start";
+            replacement.style.overflow = "hidden";
+            replacement.style.whiteSpace = "nowrap";
+
+            el.replaceWith(replacement);
+          });
+
+          doc.querySelectorAll("select").forEach((el) => {
+            const selectEl = el;
+            if (selectEl.selectedIndex >= 0) {
+              const option = selectEl.options[selectEl.selectedIndex];
+              if (option) option.setAttribute("selected", "selected");
+            }
+          });
+        },
+      });
+      const dataUrl = canvas.toDataURL("image/png");
+      const fileName = `pa28-weight-balance-${new Date()
+        .toISOString()
+        .slice(0, 10)}.png`;
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        const newTab = window.open();
+        if (newTab) {
+          newTab.document.title = "Weight & Balance";
+          const img = newTab.document.createElement("img");
+          img.src = dataUrl;
+          img.style.maxWidth = "100%";
+          newTab.document.body.style.margin = "0";
+          newTab.document.body.appendChild(img);
+        }
+      } else {
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900">
-      <div className="mx-auto max-w-5xl space-y-10">
+      <div ref={exportRef} className="mx-auto max-w-5xl space-y-10">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold text-slate-900">
             Piper Archer PA-28-TX Weight & Balance
@@ -928,7 +1012,14 @@ function App() {
           </div>
         </section>
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button
+            onClick={handleExportPhoto}
+            disabled={isExporting}
+            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isExporting ? "Exporting…" : "Export Photo"}
+          </button>
           <button
             onClick={clearAll}
             className="rounded-lg bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
