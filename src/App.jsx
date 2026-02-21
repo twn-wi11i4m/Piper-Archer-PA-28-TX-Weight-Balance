@@ -91,11 +91,10 @@ const formatDensityAltFormula = (label, pressureAlt, temp, isaTemp, result) => {
 function App() {
   const exportRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
+
   // Weight & Balance States
   const [basicWeight, setBasicWeight] = useState("");
-  const [basicArm, setBasicArm] = useState("");
   const [basicMomentInput, setBasicMomentInput] = useState("");
-  const [basicLastEdited, setBasicLastEdited] = useState(null);
   const [pilotFrontWeight, setPilotFrontWeight] = useState("");
   const [rearPaxWeight, setRearPaxWeight] = useState("");
   const [fuelGal, setFuelGal] = useState("");
@@ -121,44 +120,6 @@ function App() {
   const [departRunwayDir, setDepartRunwayDir] = useState("");
   const [arriveRunwayDir, setArriveRunwayDir] = useState("");
 
-  // Basic empty weight: fill any two of three fields
-  useEffect(() => {
-    if (!basicLastEdited) return;
-    const weight = toNumber(basicWeight);
-    const arm = toNumber(basicArm);
-    const moment = toNumber(basicMomentInput);
-
-    if (!weight) return;
-
-    if (basicLastEdited === "moment" && moment) {
-      const nextArm = moment / weight;
-      if (Number.isFinite(nextArm)) {
-        setBasicArm(nextArm ? nextArm.toFixed(2) : "");
-      }
-    }
-
-    if (basicLastEdited === "arm" && arm) {
-      const nextMoment = weight * arm;
-      if (Number.isFinite(nextMoment)) {
-        setBasicMomentInput(nextMoment ? nextMoment.toFixed(2) : "");
-      }
-    }
-
-    if (basicLastEdited === "weight") {
-      if (basicArm) {
-        const nextMoment = weight * arm;
-        if (Number.isFinite(nextMoment)) {
-          setBasicMomentInput(nextMoment ? nextMoment.toFixed(2) : "");
-        }
-      } else if (basicMomentInput) {
-        const nextArm = moment / weight;
-        if (Number.isFinite(nextArm)) {
-          setBasicArm(nextArm ? nextArm.toFixed(2) : "");
-        }
-      }
-    }
-  }, [basicWeight, basicArm, basicMomentInput, basicLastEdited]);
-
   // Sync fuel burn inputs (Remark A)
   useEffect(() => {
     if (fuelBurnSource !== "hr") return;
@@ -182,9 +143,8 @@ function App() {
     setFuelBurnHr(hr.toFixed(2));
   }, [fuelBurnGal, fuelBurnSource]);
 
-  // Numeric values
+  // Numeric values (full precision retained for calculations)
   const basicWeightNum = useMemo(() => toNumber(basicWeight), [basicWeight]);
-  const basicArmNum = useMemo(() => toNumber(basicArm), [basicArm]);
   const basicMomentNum = useMemo(
     () => toNumber(basicMomentInput),
     [basicMomentInput],
@@ -202,12 +162,21 @@ function App() {
     [baggageWeight],
   );
 
-  // Calculations
-  const basicMoment = useMemo(() => {
-    if (basicWeightNum && basicArmNum) return basicWeightNum * basicArmNum;
-    if (basicWeightNum && basicMomentNum) return basicMomentNum;
-    return 0;
-  }, [basicWeightNum, basicArmNum, basicMomentNum]);
+  // Arm is derived (read-only). No arm input, no last-edited syncing.
+  const basicArmNum = useMemo(() => {
+    return basicWeightNum > 0 ? basicMomentNum / basicWeightNum : 0;
+  }, [basicWeightNum, basicMomentNum]);
+
+  const basicArm = useMemo(() => {
+    if (basicWeightNum <= 0) return "—";
+    return basicArmNum.toFixed(2);
+  }, [basicWeightNum, basicArmNum]);
+
+  // Calculations – EXPLICIT sum-first flow
+  // 1. Sum all weights (full precision)
+  // 2. Sum all moments (full precision)
+  // 3. Derive arm = totalMoment / totalWeight
+  // This guarantees displayed totals are mathematically consistent.
   const pilotFrontMoment = useMemo(
     () => pilotFrontWeightNum * 80.5,
     [pilotFrontWeightNum],
@@ -244,16 +213,22 @@ function App() {
 
   const rampMoment = useMemo(
     () =>
-      basicMoment +
+      basicMomentNum +
       pilotFrontMoment +
       rearPaxMoment +
       fuelMoment +
       baggageMoment,
-    [basicMoment, pilotFrontMoment, rearPaxMoment, fuelMoment, baggageMoment],
+    [
+      basicMomentNum,
+      pilotFrontMoment,
+      rearPaxMoment,
+      fuelMoment,
+      baggageMoment,
+    ],
   );
 
   const rampArmValue = useMemo(
-    () => rampMoment / rampWeight || 0,
+    () => (rampWeight > 0 ? rampMoment / rampWeight : 0),
     [rampMoment, rampWeight],
   );
   const rampArm = useMemo(() => rampArmValue.toFixed(2), [rampArmValue]);
@@ -276,7 +251,7 @@ function App() {
     [rampMoment, fuelAllowanceMoment],
   );
   const takeoffArmValue = useMemo(
-    () => takeoffMoment / takeoffWeight || 0,
+    () => (takeoffWeight > 0 ? takeoffMoment / takeoffWeight : 0),
     [takeoffMoment, takeoffWeight],
   );
   const takeoffArm = useMemo(
@@ -299,7 +274,7 @@ function App() {
     [takeoffMoment, fuelBurnMoment],
   );
   const landingArmValue = useMemo(
-    () => landingMoment / landingWeight || 0,
+    () => (landingWeight > 0 ? landingMoment / landingWeight : 0),
     [landingMoment, landingWeight],
   );
   const landingArm = useMemo(
@@ -439,9 +414,7 @@ function App() {
 
   const clearAll = () => {
     setBasicWeight("");
-    setBasicArm("");
     setBasicMomentInput("");
-    setBasicLastEdited(null);
     setPilotFrontWeight("");
     setRearPaxWeight("");
     setFuelGal("");
@@ -600,32 +573,31 @@ function App() {
                     <input
                       type="number"
                       value={basicWeight}
-                      onChange={(e) => {
-                        setBasicLastEdited("weight");
-                        setBasicWeight(e.target.value);
-                      }}
+                      onChange={(e) => setBasicWeight(e.target.value)}
                       className="w-full rounded border border-slate-300 px-2 py-1"
                     />
                   </td>
                   <td className="p-3">
-                    <input
-                      type="number"
-                      value={basicArm}
-                      onChange={(e) => {
-                        setBasicLastEdited("arm");
-                        setBasicArm(e.target.value);
-                      }}
-                      className={`w-full rounded border border-slate-300 px-2 py-1 ${armClassName(basicArm)}`}
-                    />
+                    {basicArm === "—" ? (
+                      <div className="w-full rounded border border-slate-300 px-2 py-1 bg-slate-50 text-slate-400">
+                        —
+                      </div>
+                    ) : (
+                      <input
+                        type="number"
+                        value={basicArm}
+                        readOnly
+                        className={`w-full rounded border border-slate-300 px-2 py-1 bg-slate-50 ${armClassName(
+                          basicArmNum,
+                        )}`}
+                      />
+                    )}
                   </td>
                   <td className="p-3">
                     <input
                       type="number"
                       value={basicMomentInput}
-                      onChange={(e) => {
-                        setBasicLastEdited("moment");
-                        setBasicMomentInput(e.target.value);
-                      }}
+                      onChange={(e) => setBasicMomentInput(e.target.value)}
                       className="w-full rounded border border-slate-300 px-2 py-1"
                     />
                   </td>
@@ -680,7 +652,7 @@ function App() {
                         max="48"
                       />
                       <span className="text-slate-600">
-                        Gal = {fuelWeight.toFixed(0)} lb
+                        Gal = {fuelWeight.toFixed(2)} lb
                       </span>
                     </div>
                   </td>
@@ -712,7 +684,7 @@ function App() {
 
                 <tr className="bg-sky-50 font-semibold">
                   <td className="p-3">Ramp Weight</td>
-                  <td className="p-3">{rampWeight.toFixed(0)}</td>
+                  <td className="p-3">{rampWeight.toFixed(2)}</td>
                   <td className={`p-3 ${armClassName(rampArmValue)}`}>
                     {rampArm}
                   </td>
@@ -730,7 +702,7 @@ function App() {
                         className="w-24 rounded border border-slate-300 px-2 py-1"
                       />
                       <span className="text-slate-600">
-                        Gal = {fuelAllowanceWeight.toFixed(0)} lb
+                        Gal = {fuelAllowanceWeight.toFixed(2)} lb
                       </span>
                     </div>
                   </td>
@@ -747,7 +719,7 @@ function App() {
                       MTOW 2550 lb • CG 82-93 in
                     </span>
                   </td>
-                  <td className="p-3">{takeoffWeight.toFixed(0)}</td>
+                  <td className="p-3">{takeoffWeight.toFixed(2)}</td>
                   <td className={`p-3 ${armClassName(takeoffArmValue)}`}>
                     {takeoffArm}
                   </td>
@@ -785,7 +757,7 @@ function App() {
                         placeholder="Gal"
                       />
                       <span className="text-slate-600">
-                        Gal = {fuelBurnWeight.toFixed(0)} lb
+                        Gal = {fuelBurnWeight.toFixed(2)} lb
                       </span>
                     </div>
                   </td>
@@ -802,7 +774,7 @@ function App() {
                       MLW 2550 lb • CG 82-93 in
                     </span>
                   </td>
-                  <td className="p-3">{landingWeight.toFixed(0)}</td>
+                  <td className="p-3">{landingWeight.toFixed(2)}</td>
                   <td className={`p-3 ${armClassName(landingArmValue)}`}>
                     {landingArm}
                   </td>
