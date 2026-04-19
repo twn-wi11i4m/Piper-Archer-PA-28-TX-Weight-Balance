@@ -97,8 +97,8 @@ function App() {
   const [basicMomentInput, setBasicMomentInput] = useState("");
   const [pilotFrontWeight, setPilotFrontWeight] = useState("");
   const [rearPaxWeight, setRearPaxWeight] = useState("");
-  const [fuelGal, setFuelGal] = useState("");
   const [baggageWeight, setBaggageWeight] = useState("");
+  const [fuelGal, setFuelGal] = useState("");
   const [fuelAllowanceGal, setFuelAllowanceGal] = useState("");
   const [fuelBurnHr, setFuelBurnHr] = useState("");
   const [fuelBurnGal, setFuelBurnGal] = useState("");
@@ -185,15 +185,15 @@ function App() {
     () => rearPaxWeightNum * 118.1,
     [rearPaxWeightNum],
   );
+  const baggageMoment = useMemo(
+    () => baggageWeightNum * 142.8,
+    [baggageWeightNum],
+  );
   const fuelWeight = useMemo(
     () => toNumber(fuelGal) * FUEL_LB_PER_GAL,
     [fuelGal],
   );
   const fuelMoment = useMemo(() => fuelWeight * 95, [fuelWeight]);
-  const baggageMoment = useMemo(
-    () => baggageWeightNum * 142.8,
-    [baggageWeightNum],
-  );
 
   const rampWeight = useMemo(() => {
     return (
@@ -417,8 +417,8 @@ function App() {
     setBasicMomentInput("");
     setPilotFrontWeight("");
     setRearPaxWeight("");
-    setFuelGal("");
     setBaggageWeight("");
+    setFuelGal("");
     setFuelAllowanceGal("");
     setFuelBurnHr("");
     setFuelBurnGal("");
@@ -545,7 +545,7 @@ function App() {
           </h1>
           <p className="text-sm text-slate-600">
             Fill in the weights below. Moments, arms, and performance data
-            update instantly in the background.
+            update instantly in the background. Developed by William NG.
           </p>
         </header>
 
@@ -637,6 +637,28 @@ function App() {
 
                 <tr>
                   <td className="p-3">
+                    Baggage
+                    <span className="block text-xs text-slate-500">
+                      Max 200 lb
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    <input
+                      type="number"
+                      value={baggageWeight}
+                      onChange={(e) => setBaggageWeight(e.target.value)}
+                      className="w-full rounded border border-slate-300 px-2 py-1"
+                      max="200"
+                    />
+                  </td>
+                  <td className="p-3">142.8</td>
+                  <td className="p-3 font-semibold">
+                    {baggageMoment.toFixed(2)}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td className="p-3">
                     Fuel
                     <span className="block text-xs text-slate-500">
                       Max usable 48 gal
@@ -658,28 +680,6 @@ function App() {
                   </td>
                   <td className="p-3">95</td>
                   <td className="p-3 font-semibold">{fuelMoment.toFixed(2)}</td>
-                </tr>
-
-                <tr>
-                  <td className="p-3">
-                    Baggage
-                    <span className="block text-xs text-slate-500">
-                      Max 200 lb
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <input
-                      type="number"
-                      value={baggageWeight}
-                      onChange={(e) => setBaggageWeight(e.target.value)}
-                      className="w-full rounded border border-slate-300 px-2 py-1"
-                      max="200"
-                    />
-                  </td>
-                  <td className="p-3">142.8</td>
-                  <td className="p-3 font-semibold">
-                    {baggageMoment.toFixed(2)}
-                  </td>
                 </tr>
 
                 <tr className="bg-sky-50 font-semibold">
