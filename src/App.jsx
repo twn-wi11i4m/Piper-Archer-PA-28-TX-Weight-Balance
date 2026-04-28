@@ -3,21 +3,45 @@ import html2canvas from "html2canvas";
 
 const FUEL_LB_PER_GAL = 6;
 const FUEL_BURN_GAL_PER_HR = 11;
-const ARM_MIN = 82;
+const ARM_MIN_LOW = 82;
 const ARM_MAX = 93;
+const WEIGHT_THRESHOLD = 2050;
+const TOW_MAX = 2550;
+const FORWARD_LIMIT_AT_MAX = 88.5;
 
 const toNumber = (value) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
 };
 
-const isArmOutOfRange = (value) => {
-  const num = Number(value);
-  return Number.isFinite(num) && num > 0 && (num < ARM_MIN || num > ARM_MAX);
+const getForwardCGLimit = (weight) => {
+  const w = toNumber(weight);
+  if (w <= WEIGHT_THRESHOLD) return ARM_MIN_LOW;
+
+  if (w >= TOW_MAX) return FORWARD_LIMIT_AT_MAX;
+
+  // Linear interpolation between 2050lb@82.0 and 2550lb@88.5
+  const weightRange = TOW_MAX - WEIGHT_THRESHOLD;
+  const limitRange = FORWARD_LIMIT_AT_MAX - ARM_MIN_LOW;
+  const fraction = (w - WEIGHT_THRESHOLD) / weightRange;
+
+  return ARM_MIN_LOW + limitRange * fraction;
 };
 
-const armClassName = (value) =>
-  isArmOutOfRange(value) ? "text-rose-600" : "text-slate-900";
+const isArmOutOfRange = (arm, weight) => {
+  const a = toNumber(arm);
+  const w = toNumber(weight);
+
+  if (!Number.isFinite(a) || !Number.isFinite(w) || w <= 0) return false;
+
+  const forwardLimit = getForwardCGLimit(w);
+  const aftLimit = ARM_MAX;
+
+  return a < forwardLimit || a > aftLimit;
+};
+
+const armClassName = (arm, weight) =>
+  isArmOutOfRange(arm, weight) ? "text-rose-600" : "text-slate-900";
 
 function calculateHeadCrossWind(windDir, windSpeed, runwayDir) {
   if (windDir == null || windSpeed == null || runwayDir == null) {
@@ -589,6 +613,7 @@ function App() {
                         readOnly
                         className={`w-full rounded border border-slate-300 px-2 py-1 bg-slate-50 ${armClassName(
                           basicArmNum,
+                          basicWeightNum,
                         )}`}
                       />
                     )}
@@ -685,7 +710,9 @@ function App() {
                 <tr className="bg-sky-50 font-semibold">
                   <td className="p-3">Ramp Weight</td>
                   <td className="p-3">{rampWeight.toFixed(2)}</td>
-                  <td className={`p-3 ${armClassName(rampArmValue)}`}>
+                  <td
+                    className={`p-3 ${armClassName(rampArmValue, rampWeight)}`}
+                  >
                     {rampArm}
                   </td>
                   <td className="p-3">{rampMoment.toFixed(2)}</td>
@@ -720,7 +747,9 @@ function App() {
                     </span>
                   </td>
                   <td className="p-3">{takeoffWeight.toFixed(2)}</td>
-                  <td className={`p-3 ${armClassName(takeoffArmValue)}`}>
+                  <td
+                    className={`p-3 ${armClassName(takeoffArmValue, takeoffWeight)}`}
+                  >
                     {takeoffArm}
                   </td>
                   <td className="p-3">{takeoffMoment.toFixed(2)}</td>
@@ -775,7 +804,9 @@ function App() {
                     </span>
                   </td>
                   <td className="p-3">{landingWeight.toFixed(2)}</td>
-                  <td className={`p-3 ${armClassName(landingArmValue)}`}>
+                  <td
+                    className={`p-3 ${armClassName(landingArmValue, landingWeight)}`}
+                  >
                     {landingArm}
                   </td>
                   <td className="p-3">{landingMoment.toFixed(2)}</td>
