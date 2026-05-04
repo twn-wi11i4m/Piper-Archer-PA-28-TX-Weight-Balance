@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
+import { findTakeoffGroundRoll } from "./flap_up_takeoff_ground_roll";
+import { findLandingGroundRoll } from "./landing_ground_roll";
+
 const FUEL_LB_PER_GAL = 6;
 const FUEL_BURN_GAL_PER_HR = 11;
 const ARM_MIN_LOW = 82;
@@ -435,6 +438,101 @@ function App() {
       ),
     [arriveWindDir, arriveWindSpeed, arriveRunwayDeg],
   );
+
+  // flap up takeoff ground roll (for departure and arrive) — use numeric
+  // takeoffWeight for TO, and landingWeight for landing calculations.
+  const departFlapUpTakeoffGroundRoll = useMemo(() => {
+    const t = toNumber(departTemp);
+    const pAlt = departPressureAlt;
+    const w = toNumber(takeoffWeight);
+    const wind = toNumber(departWindSpeed);
+    if (
+      !Number.isFinite(t) ||
+      !Number.isFinite(pAlt) ||
+      pAlt <= 0 ||
+      !Number.isFinite(w) ||
+      w <= 0 ||
+      !Number.isFinite(wind)
+    ) {
+      return "—";
+    }
+    try {
+      const val = findTakeoffGroundRoll(t, pAlt, w, wind);
+      return Number.isFinite(val) ? val.toFixed(0) : "—";
+    } catch (e) {
+      return "—";
+    }
+  }, [departTemp, departPressureAlt, takeoffWeight, departWindSpeed]);
+
+  const arriveFlapUpTakeoffGroundRoll = useMemo(() => {
+    const t = toNumber(arriveTemp);
+    const pAlt = arrivePressureAlt;
+    const w = toNumber(takeoffWeight);
+    const wind = toNumber(arriveWindSpeed);
+    if (
+      !Number.isFinite(t) ||
+      !Number.isFinite(pAlt) ||
+      pAlt <= 0 ||
+      !Number.isFinite(w) ||
+      w <= 0 ||
+      !Number.isFinite(wind)
+    ) {
+      return "—";
+    }
+    try {
+      const val = findTakeoffGroundRoll(t, pAlt, w, wind);
+      return Number.isFinite(val) ? val.toFixed(0) : "—";
+    } catch (e) {
+      return "—";
+    }
+  }, [arriveTemp, arrivePressureAlt, takeoffWeight, arriveWindSpeed]);
+
+  // landing ground roll (for departure and arrive) — use landingWeight
+  const departLandingGroundRoll = useMemo(() => {
+    const t = toNumber(departTemp);
+    const pAlt = departPressureAlt;
+    const w = toNumber(landingWeight);
+    const wind = toNumber(departWindSpeed);
+    if (
+      !Number.isFinite(t) ||
+      !Number.isFinite(pAlt) ||
+      pAlt <= 0 ||
+      !Number.isFinite(w) ||
+      w <= 0 ||
+      !Number.isFinite(wind)
+    ) {
+      return "—";
+    }
+    try {
+      const val = findLandingGroundRoll(t, pAlt, w, wind);
+      return Number.isFinite(val) ? val.toFixed(0) : "—";
+    } catch (e) {
+      return "—";
+    }
+  }, [departTemp, departPressureAlt, landingWeight, departWindSpeed]);
+
+  const arriveLandingGroundRoll = useMemo(() => {
+    const t = toNumber(arriveTemp);
+    const pAlt = arrivePressureAlt;
+    const w = toNumber(landingWeight);
+    const wind = toNumber(arriveWindSpeed);
+    if (
+      !Number.isFinite(t) ||
+      !Number.isFinite(pAlt) ||
+      pAlt <= 0 ||
+      !Number.isFinite(w) ||
+      w <= 0 ||
+      !Number.isFinite(wind)
+    ) {
+      return "—";
+    }
+    try {
+      const val = findLandingGroundRoll(t, pAlt, w, wind);
+      return Number.isFinite(val) ? val.toFixed(0) : "—";
+    } catch (e) {
+      return "—";
+    }
+  }, [arriveTemp, arrivePressureAlt, landingWeight, arriveWindSpeed]);
 
   const clearAll = () => {
     setBasicWeight("");
@@ -1025,6 +1123,16 @@ function App() {
                   <td className="p-3">
                     {arriveWinds.crosswind} {arriveWinds.crosswindDir}
                   </td>
+                </tr>
+                <tr>
+                  <td className="p-3">Flap-up Takeoff Ground Roll (ft)</td>
+                  <td className="p-3">{departFlapUpTakeoffGroundRoll}</td>
+                  <td className="p-3">{arriveFlapUpTakeoffGroundRoll}</td>
+                </tr>
+                <tr>
+                  <td className="p-3">Landing Ground Roll (ft)</td>
+                  <td className="p-3">{departLandingGroundRoll}</td>
+                  <td className="p-3">{arriveLandingGroundRoll}</td>
                 </tr>
               </tbody>
             </table>

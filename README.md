@@ -35,6 +35,11 @@ npm run preview
 
 > The CG envelope for the PA-28-TX features a fixed aft limit of 93.0 inches. The forward limit is 82.0 inches up to 2,050 lb, then slopes linearly to 88.5 inches at 2,550 lb. The app performs real-time CG validation against this weight-dependent envelope and visually warns the pilot if the CG is out of limits.
 
+
+- Takeoff and Landing Data:
+
+The app includes takeoff and landing data for various weight and temperature conditions.
+
 ## Deployment
 
 - Build the production assets before deploying:
