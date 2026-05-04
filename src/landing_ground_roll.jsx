@@ -231,58 +231,58 @@ export function calculateRawAltitudeByWind(windSpeed, rawAltitude) {
   if (windSpeed > 0) {
     if (rawAltitude < 700) {
       const _diff = 700 - rawAltitude;
-      return eq_hw_700(windSpeed) - _diff;
+      return eqHw700(windSpeed) - _diff;
     } else if (700 <= rawAltitude && rawAltitude < 800) {
       return linearInterpolate(
         rawAltitude,
         700,
         800,
-        eq_hw_700(windSpeed),
-        eq_hw_800(windSpeed),
+        eqHw700(windSpeed),
+        eqHw800(windSpeed),
       );
     } else if (800 <= rawAltitude && rawAltitude < 900) {
       return linearInterpolate(
         rawAltitude,
         800,
         900,
-        eq_hw_800(windSpeed),
-        eq_hw_900(windSpeed),
+        eqHw800(windSpeed),
+        eqHw900(windSpeed),
       );
     } else if (900 <= rawAltitude && rawAltitude < 1000) {
       return linearInterpolate(
         rawAltitude,
         900,
         1000,
-        eq_hw_900(windSpeed),
-        eq_hw_1000(windSpeed),
+        eqHw900(windSpeed),
+        eqHw1000(windSpeed),
       );
     } else if (1000 <= rawAltitude && rawAltitude < 1100) {
       return linearInterpolate(
         rawAltitude,
         1000,
         1100,
-        eq_hw_1000(windSpeed),
-        eq_hw_1100(windSpeed),
+        eqHw1000(windSpeed),
+        eqHw1100(windSpeed),
       );
     } else if (1100 <= rawAltitude && rawAltitude < 1200) {
       return linearInterpolate(
         rawAltitude,
         1100,
         1200,
-        eq_hw_1100(windSpeed),
-        eq_hw_1200(windSpeed),
+        eqHw1100(windSpeed),
+        eqHw1200(windSpeed),
       );
     } else if (1200 <= rawAltitude && rawAltitude < 1300) {
       return linearInterpolate(
         rawAltitude,
         1200,
         1300,
-        eq_hw_1200(windSpeed),
-        eq_hw_1300(windSpeed),
+        eqHw1200(windSpeed),
+        eqHw1300(windSpeed),
       );
     } else if (1300 <= rawAltitude) {
       const _diff = rawAltitude - 1300;
-      return eq_hw_1300(windSpeed) + _diff;
+      return eqHw1300(windSpeed) + _diff;
     }
   } else if (windSpeed === 0) {
     return rawAltitude;
@@ -290,42 +290,42 @@ export function calculateRawAltitudeByWind(windSpeed, rawAltitude) {
     // Tailwind
     if (rawAltitude < 700) {
       const _diff = 700 - rawAltitude;
-      return eq_tw_700(windSpeed) + _diff;
+      return eqTw700(windSpeed) + _diff;
     } else if (700 <= rawAltitude && rawAltitude < 800) {
       return linearInterpolate(
         rawAltitude,
         700,
         800,
-        eq_tw_700(windSpeed),
-        eq_tw_800(windSpeed),
+        eqTw700(windSpeed),
+        eqTw800(windSpeed),
       );
     } else if (800 <= rawAltitude && rawAltitude < 900) {
       return linearInterpolate(
         rawAltitude,
         800,
         900,
-        eq_tw_800(windSpeed),
-        eq_tw_900(windSpeed),
+        eqTw800(windSpeed),
+        eqTw900(windSpeed),
       );
     } else if (900 <= rawAltitude && rawAltitude < 1000) {
       return linearInterpolate(
         rawAltitude,
         900,
         1000,
-        eq_tw_900(windSpeed),
-        eq_tw_1000(windSpeed),
+        eqTw900(windSpeed),
+        eqTw1000(windSpeed),
       );
     } else if (1000 <= rawAltitude && rawAltitude < 1100) {
       return linearInterpolate(
         rawAltitude,
         1000,
         1100,
-        eq_tw_1000(windSpeed),
-        eq_tw_1100(windSpeed),
+        eqTw1000(windSpeed),
+        eqTw1100(windSpeed),
       );
     } else if (1100 <= rawAltitude) {
       const _diff = rawAltitude - 1100;
-      return eq_tw_1100(windSpeed) + _diff;
+      return eqTw1100(windSpeed) + _diff;
     }
   }
   return rawAltitude;
